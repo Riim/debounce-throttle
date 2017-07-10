@@ -1,0 +1,24 @@
+{
+  "name": "@riim/debounce-throttle",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "build": "node_modules/.bin/tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Riim/debounce-throttle.git"
+  },
+  "author": "Dmitry Vibe",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Riim/debounce-throttle/issues"
+  },
+  "homepage": "https://github.com/Riim/debounce-throttle#readme",
+  "devDependencies": {
+    "typescript": "^2.4.1"
+  }
+}
