@@ -1,91 +1,87 @@
 export interface IDebounced {
-	(): any
-	clear(): void
-	flush(): void
+	(): any;
+	clear(): void;
+	flush(): void;
 }
 
-export function debounce(delay: number, callback: Function): IDebounced
-export function debounce(delay: number, immediate: boolean, callback: Function): IDebounced
-export function debounce(delay: number, immediateOrCallback: Function | boolean, callback?: Function): IDebounced {
-	let immediate: boolean
-
-	if (callback === undefined) {
-		immediate = false
-		callback = immediateOrCallback as Function
-	} else {
-		immediate = immediateOrCallback as boolean
+export function debounce(delay: number, immediate: boolean, callback: Function): IDebounced;
+export function debounce(delay: number, callback: Function): IDebounced;
+export function debounce(delay: number, immediate: boolean | Function, callback?: Function): IDebounced {
+	if (typeof immediate == 'function') {
+		callback = immediate;
+		immediate = false;
 	}
 
-	let context: any
-	let args: IArguments | null
-	let timestamp: number
-	let timeoutID: number | null | undefined
-	let lastExec = 0
-	let result: any
+	let context: any;
+	let args: IArguments | null;
+	let timestamp: number;
+	let timeoutID: number | null | undefined;
+	let lastExec = 0;
+	let result: any;
 
 	function later() {
-		let now = Date.now()
+		let now = Date.now();
 
 		if (now - timestamp < delay) {
-			timeoutID = setTimeout(later, delay - (now - timestamp))
+			timeoutID = setTimeout(later, delay - (now - timestamp));
 		} else {
-			timeoutID = null
+			timeoutID = null;
 
-			lastExec = now
+			lastExec = now;
 
-			result = (callback as Function).apply(context, args)
+			result = (callback as Function).apply(context, args);
 			if (!timeoutID) {
-				context = args = null
+				context = args = null;
 			}
 		}
 	}
 
 	let debounced = function debounced() {
-		timestamp = Date.now()
+		timestamp = Date.now();
 
 		if (immediate && timestamp - lastExec >= delay) {
-			lastExec = timestamp
+			lastExec = timestamp;
 
 			if (!timeoutID) {
-				result = (callback as Function).apply(this, arguments)
-				return result
+				result = (callback as Function).apply(this, arguments);
+				return result;
 			}
 
-			result = (callback as Function).apply(context, args)
+			result = (callback as Function).apply(context, args);
 		}
 
-		context = this
-		args = arguments
+		context = this;
+		args = arguments;
 
 		if (!timeoutID) {
-			timeoutID = setTimeout(later, delay)
+			timeoutID = setTimeout(later, delay);
 		}
 
-		return result
-	} as IDebounced
+		return result;
+	} as IDebounced;
 
-	debounced.flush = function flush() {
+	debounced.flush = () => {
 		if (timeoutID) {
-			clearTimeout(timeoutID)
-			timeoutID = null
+			clearTimeout(timeoutID);
+			timeoutID = null;
 
-			lastExec = Date.now()
+			lastExec = Date.now();
 
-			result = (callback as Function).apply(context, args)
+			result = (callback as Function).apply(context, args);
 			if (!timeoutID) {
-				context = args = null
+				context = args = null;
 			}
 		}
-	}
+	};
 
-	debounced.clear = function clear() {
+	debounced.clear = () => {
 		if (timeoutID) {
-			clearTimeout(timeoutID)
-			timeoutID = null
+			clearTimeout(timeoutID);
+			timeoutID = null;
 
-			context = args = null
+			context = args = null;
 		}
-	}
+	};
 
-	return debounced
+	return debounced;
 }

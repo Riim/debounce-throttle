@@ -1,13 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function throttle(delay, noTrailingOrCallback, callback) {
-    var noTrailing;
-    if (callback === undefined) {
+function throttle(delay, noTrailing, callback) {
+    if (typeof noTrailing == 'function') {
+        callback = noTrailing;
         noTrailing = false;
-        callback = noTrailingOrCallback;
-    }
-    else {
-        noTrailing = noTrailingOrCallback;
     }
     var context;
     var args;
@@ -43,7 +39,7 @@ function throttle(delay, noTrailingOrCallback, callback) {
         }
         return result;
     };
-    throttled.flush = function flush() {
+    throttled.flush = function () {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;
@@ -54,7 +50,7 @@ function throttle(delay, noTrailingOrCallback, callback) {
             }
         }
     };
-    throttled.clear = function clear() {
+    throttled.clear = function () {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;

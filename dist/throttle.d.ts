@@ -3,5 +3,5 @@ export interface IThrottled {
     clear(): void;
     flush(): void;
 }
-export declare function throttle(delay: number, callback: Function): IThrottled;
 export declare function throttle(delay: number, noTrailing: boolean, callback: Function): IThrottled;
+export declare function throttle(delay: number, callback: Function): IThrottled;

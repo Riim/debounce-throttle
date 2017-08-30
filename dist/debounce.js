@@ -1,13 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function debounce(delay, immediateOrCallback, callback) {
-    var immediate;
-    if (callback === undefined) {
+function debounce(delay, immediate, callback) {
+    if (typeof immediate == 'function') {
+        callback = immediate;
         immediate = false;
-        callback = immediateOrCallback;
-    }
-    else {
-        immediate = immediateOrCallback;
     }
     var context;
     var args;
@@ -46,7 +42,7 @@ function debounce(delay, immediateOrCallback, callback) {
         }
         return result;
     };
-    debounced.flush = function flush() {
+    debounced.flush = function () {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;
@@ -57,7 +53,7 @@ function debounce(delay, immediateOrCallback, callback) {
             }
         }
     };
-    debounced.clear = function clear() {
+    debounced.clear = function () {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;

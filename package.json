@@ -1,6 +1,6 @@
 {
   "name": "@riim/debounce-throttle",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/Riim/debounce-throttle#readme",
   "devDependencies": {
-    "typescript": "^2.4.1"
+    "typescript": "^2.5.1"
   }
 }
