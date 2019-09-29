@@ -4,9 +4,23 @@ export interface IThrottled {
 	flush(): void;
 }
 
-export function throttle(delay: number, noTrailing: boolean, callback: Function): IThrottled;
-export function throttle(delay: number, callback: Function): IThrottled;
-export function throttle(delay: number, noTrailing: boolean | Function, callback?: Function): IThrottled {
+export const throttle: {
+	(delay: number, noTrailing: boolean | undefined, callback: Function): IThrottled;
+	(delay: number, callback: Function): IThrottled;
+
+	decorator(
+		delay: number,
+		noTrailing?: boolean
+	): (
+		target: Object,
+		propertyName: string,
+		propertyDesc?: PropertyDescriptor
+	) => PropertyDescriptor;
+} = function throttle(
+	delay: number,
+	noTrailing: boolean | Function | undefined,
+	callback?: Function
+): IThrottled {
 	if (typeof noTrailing == 'function') {
 		callback = noTrailing;
 		noTrailing = false;
@@ -82,4 +96,17 @@ export function throttle(delay: number, noTrailing: boolean | Function, callback
 	};
 
 	return throttled;
-}
+} as any;
+
+throttle.decorator = (delay, noTrailing) => {
+	return (target, propertyName, propertyDesc) => {
+		if (!propertyDesc) {
+			propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+		}
+		let method = propertyDesc!.value;
+
+		propertyDesc!.value = throttle(delay, noTrailing, method);
+
+		return propertyDesc!;
+	};
+};

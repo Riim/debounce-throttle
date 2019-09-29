@@ -1,18 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function debounce(delay, immediate, callback) {
+exports.debounce = function debounce(delay, immediate, callback) {
     if (typeof immediate == 'function') {
         callback = immediate;
         immediate = false;
     }
-    var context;
-    var args;
-    var timestamp;
-    var timeoutID;
-    var lastExec = 0;
-    var result;
+    let context;
+    let args;
+    let timestamp;
+    let timeoutID;
+    let lastExec = 0;
+    let result;
     function later() {
-        var now = Date.now();
+        let now = Date.now();
         if (now - timestamp < delay) {
             timeoutID = setTimeout(later, delay - (now - timestamp));
         }
@@ -25,7 +25,7 @@ function debounce(delay, immediate, callback) {
             }
         }
     }
-    var debounced = function debounced() {
+    let debounced = function debounced() {
         timestamp = Date.now();
         if (immediate && timestamp - lastExec >= delay) {
             lastExec = timestamp;
@@ -42,7 +42,7 @@ function debounce(delay, immediate, callback) {
         }
         return result;
     };
-    debounced.flush = function () {
+    debounced.flush = () => {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;
@@ -53,7 +53,7 @@ function debounce(delay, immediate, callback) {
             }
         }
     };
-    debounced.clear = function () {
+    debounced.clear = () => {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;
@@ -61,5 +61,14 @@ function debounce(delay, immediate, callback) {
         }
     };
     return debounced;
-}
-exports.debounce = debounce;
+};
+exports.debounce.decorator = (delay, immediate) => {
+    return (target, propertyName, propertyDesc) => {
+        if (!propertyDesc) {
+            propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+        }
+        let method = propertyDesc.value;
+        propertyDesc.value = exports.debounce(delay, immediate, method);
+        return propertyDesc;
+    };
+};

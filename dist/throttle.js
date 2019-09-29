@@ -1,16 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function throttle(delay, noTrailing, callback) {
+exports.throttle = function throttle(delay, noTrailing, callback) {
     if (typeof noTrailing == 'function') {
         callback = noTrailing;
         noTrailing = false;
     }
-    var context;
-    var args;
-    var timestamp;
-    var timeoutID;
-    var lastExec = 0;
-    var result;
+    let context;
+    let args;
+    let timestamp;
+    let timeoutID;
+    let lastExec = 0;
+    let result;
     function later() {
         timeoutID = null;
         lastExec = Date.now();
@@ -19,7 +19,7 @@ function throttle(delay, noTrailing, callback) {
             context = args = null;
         }
     }
-    var throttled = function throttled() {
+    let throttled = function throttled() {
         timestamp = Date.now();
         if (timestamp - lastExec >= delay) {
             lastExec = timestamp;
@@ -39,7 +39,7 @@ function throttle(delay, noTrailing, callback) {
         }
         return result;
     };
-    throttled.flush = function () {
+    throttled.flush = () => {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;
@@ -50,7 +50,7 @@ function throttle(delay, noTrailing, callback) {
             }
         }
     };
-    throttled.clear = function () {
+    throttled.clear = () => {
         if (timeoutID) {
             clearTimeout(timeoutID);
             timeoutID = null;
@@ -58,5 +58,14 @@ function throttle(delay, noTrailing, callback) {
         }
     };
     return throttled;
-}
-exports.throttle = throttle;
+};
+exports.throttle.decorator = (delay, noTrailing) => {
+    return (target, propertyName, propertyDesc) => {
+        if (!propertyDesc) {
+            propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+        }
+        let method = propertyDesc.value;
+        propertyDesc.value = exports.throttle(delay, noTrailing, method);
+        return propertyDesc;
+    };
+};

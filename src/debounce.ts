@@ -4,9 +4,23 @@ export interface IDebounced {
 	flush(): void;
 }
 
-export function debounce(delay: number, immediate: boolean, callback: Function): IDebounced;
-export function debounce(delay: number, callback: Function): IDebounced;
-export function debounce(delay: number, immediate: boolean | Function, callback?: Function): IDebounced {
+export const debounce: {
+	(delay: number, immediate: boolean | undefined, callback: Function): IDebounced;
+	(delay: number, callback: Function): IDebounced;
+
+	decorator(
+		delay: number,
+		noTrailing?: boolean
+	): (
+		target: Object,
+		propertyName: string,
+		propertyDesc?: PropertyDescriptor
+	) => PropertyDescriptor;
+} = function debounce(
+	delay: number,
+	immediate: boolean | Function | undefined,
+	callback?: Function
+): IDebounced {
 	if (typeof immediate == 'function') {
 		callback = immediate;
 		immediate = false;
@@ -84,4 +98,17 @@ export function debounce(delay: number, immediate: boolean | Function, callback?
 	};
 
 	return debounced;
-}
+} as any;
+
+debounce.decorator = (delay, immediate) => {
+	return (target, propertyName, propertyDesc) => {
+		if (!propertyDesc) {
+			propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+		}
+		let method = propertyDesc!.value;
+
+		propertyDesc!.value = debounce(delay, immediate, method);
+
+		return propertyDesc!;
+	};
+};
