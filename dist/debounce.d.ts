@@ -4,7 +4,7 @@ export interface IDebounced {
     flush(): void;
 }
 export declare const debounce: {
-    (delay: number, immediate: boolean | undefined, callback: Function): IDebounced;
-    (delay: number, callback: Function): IDebounced;
-    decorator(delay: number, noTrailing?: boolean): (target: Object, propertyName: string, propertyDesc?: PropertyDescriptor) => PropertyDescriptor;
+    (delay: number, immediate: boolean | undefined, cb: Function): IDebounced;
+    (delay: number, cb: Function): IDebounced;
+    decorator(delay: number, noTrailing?: boolean): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
 };

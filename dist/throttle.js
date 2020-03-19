@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.throttle = function throttle(delay, noTrailing, callback) {
+exports.throttle = function throttle(delay, noTrailing, cb) {
     if (typeof noTrailing == 'function') {
-        callback = noTrailing;
+        cb = noTrailing;
         noTrailing = false;
     }
     let context;
@@ -14,7 +14,7 @@ exports.throttle = function throttle(delay, noTrailing, callback) {
     function later() {
         timeoutID = null;
         lastExec = Date.now();
-        result = callback.apply(context, args);
+        result = cb.apply(context, args);
         if (!timeoutID) {
             context = args = null;
         }
@@ -24,10 +24,10 @@ exports.throttle = function throttle(delay, noTrailing, callback) {
         if (timestamp - lastExec >= delay) {
             lastExec = timestamp;
             if (!timeoutID) {
-                result = callback.apply(this, arguments);
+                result = cb.apply(this, arguments);
                 return result;
             }
-            result = callback.apply(context, args);
+            result = cb.apply(context, args);
         }
         if (noTrailing) {
             return result;
@@ -44,7 +44,7 @@ exports.throttle = function throttle(delay, noTrailing, callback) {
             clearTimeout(timeoutID);
             timeoutID = null;
             lastExec = Date.now();
-            result = callback.apply(context, args);
+            result = cb.apply(context, args);
             if (!timeoutID) {
                 context = args = null;
             }
@@ -60,12 +60,23 @@ exports.throttle = function throttle(delay, noTrailing, callback) {
     return throttled;
 };
 exports.throttle.decorator = (delay, noTrailing) => {
-    return (target, propertyName, propertyDesc) => {
-        if (!propertyDesc) {
-            propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+    return (target, propName, propDesc) => {
+        if (!propDesc) {
+            propDesc = Object.getOwnPropertyDescriptor(target, propName);
         }
-        let method = propertyDesc.value;
-        propertyDesc.value = exports.throttle(delay, noTrailing, method);
-        return propertyDesc;
+        return {
+            configurable: true,
+            enumerable: propDesc.enumerable,
+            get: function () {
+                let throttled = exports.throttle(delay, noTrailing, propDesc.value);
+                Object.defineProperty(this, propName, {
+                    configurable: true,
+                    enumerable: propDesc.enumerable,
+                    writable: propDesc.writable,
+                    value: throttled
+                });
+                return throttled;
+            }
+        };
     };
 };

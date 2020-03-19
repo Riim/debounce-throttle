@@ -4,7 +4,7 @@ export interface IThrottled {
     flush(): void;
 }
 export declare const throttle: {
-    (delay: number, noTrailing: boolean | undefined, callback: Function): IThrottled;
-    (delay: number, callback: Function): IThrottled;
-    decorator(delay: number, noTrailing?: boolean): (target: Object, propertyName: string, propertyDesc?: PropertyDescriptor) => PropertyDescriptor;
+    (delay: number, noTrailing: boolean | undefined, cb: Function): IThrottled;
+    (delay: number, cb: Function): IThrottled;
+    decorator(delay: number, noTrailing?: boolean): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
 };

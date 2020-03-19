@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.debounce = function debounce(delay, immediate, callback) {
+exports.debounce = function debounce(delay, immediate, cb) {
     if (typeof immediate == 'function') {
-        callback = immediate;
+        cb = immediate;
         immediate = false;
     }
     let context;
@@ -19,7 +19,7 @@ exports.debounce = function debounce(delay, immediate, callback) {
         else {
             timeoutID = null;
             lastExec = now;
-            result = callback.apply(context, args);
+            result = cb.apply(context, args);
             if (!timeoutID) {
                 context = args = null;
             }
@@ -30,10 +30,10 @@ exports.debounce = function debounce(delay, immediate, callback) {
         if (immediate && timestamp - lastExec >= delay) {
             lastExec = timestamp;
             if (!timeoutID) {
-                result = callback.apply(this, arguments);
+                result = cb.apply(this, arguments);
                 return result;
             }
-            result = callback.apply(context, args);
+            result = cb.apply(context, args);
         }
         context = this;
         args = arguments;
@@ -47,7 +47,7 @@ exports.debounce = function debounce(delay, immediate, callback) {
             clearTimeout(timeoutID);
             timeoutID = null;
             lastExec = Date.now();
-            result = callback.apply(context, args);
+            result = cb.apply(context, args);
             if (!timeoutID) {
                 context = args = null;
             }
@@ -63,12 +63,23 @@ exports.debounce = function debounce(delay, immediate, callback) {
     return debounced;
 };
 exports.debounce.decorator = (delay, immediate) => {
-    return (target, propertyName, propertyDesc) => {
-        if (!propertyDesc) {
-            propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+    return (target, propName, propDesc) => {
+        if (!propDesc) {
+            propDesc = Object.getOwnPropertyDescriptor(target, propName);
         }
-        let method = propertyDesc.value;
-        propertyDesc.value = exports.debounce(delay, immediate, method);
-        return propertyDesc;
+        return {
+            configurable: true,
+            enumerable: propDesc.enumerable,
+            get: function () {
+                let debounced = exports.debounce(delay, immediate, propDesc.value);
+                Object.defineProperty(this, propName, {
+                    configurable: true,
+                    enumerable: propDesc.enumerable,
+                    writable: propDesc.writable,
+                    value: debounced
+                });
+                return debounced;
+            }
+        };
     };
 };
