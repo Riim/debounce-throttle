@@ -5,24 +5,20 @@ export interface IDebounced {
 }
 
 export const debounce: {
-	(delay: number, immediate: boolean | undefined, callback: Function): IDebounced;
-	(delay: number, callback: Function): IDebounced;
+	(delay: number, immediate: boolean | undefined, cb: Function): IDebounced;
+	(delay: number, cb: Function): IDebounced;
 
 	decorator(
 		delay: number,
 		noTrailing?: boolean
-	): (
-		target: Object,
-		propertyName: string,
-		propertyDesc?: PropertyDescriptor
-	) => PropertyDescriptor;
+	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
 } = function debounce(
 	delay: number,
 	immediate: boolean | Function | undefined,
-	callback?: Function
+	cb?: Function
 ): IDebounced {
 	if (typeof immediate == 'function') {
-		callback = immediate;
+		cb = immediate;
 		immediate = false;
 	}
 
@@ -40,10 +36,9 @@ export const debounce: {
 			timeoutID = setTimeout(later, delay - (now - timestamp));
 		} else {
 			timeoutID = null;
-
 			lastExec = now;
+			result = cb!.apply(context, args);
 
-			result = (callback as Function).apply(context, args);
 			if (!timeoutID) {
 				context = args = null;
 			}
@@ -57,11 +52,11 @@ export const debounce: {
 			lastExec = timestamp;
 
 			if (!timeoutID) {
-				result = (callback as Function).apply(this, arguments);
+				result = cb!.apply(this, arguments);
 				return result;
 			}
 
-			result = (callback as Function).apply(context, args);
+			result = cb!.apply(context, args);
 		}
 
 		context = this;
@@ -78,10 +73,9 @@ export const debounce: {
 		if (timeoutID) {
 			clearTimeout(timeoutID);
 			timeoutID = null;
-
 			lastExec = Date.now();
+			result = cb!.apply(context, args);
 
-			result = (callback as Function).apply(context, args);
 			if (!timeoutID) {
 				context = args = null;
 			}
@@ -92,7 +86,6 @@ export const debounce: {
 		if (timeoutID) {
 			clearTimeout(timeoutID);
 			timeoutID = null;
-
 			context = args = null;
 		}
 	};
@@ -101,14 +94,26 @@ export const debounce: {
 } as any;
 
 debounce.decorator = (delay, immediate) => {
-	return (target, propertyName, propertyDesc) => {
-		if (!propertyDesc) {
-			propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+	return (target, propName, propDesc) => {
+		if (!propDesc) {
+			propDesc = Object.getOwnPropertyDescriptor(target, propName)!;
 		}
-		let method = propertyDesc!.value;
 
-		propertyDesc!.value = debounce(delay, immediate, method);
+		return {
+			configurable: true,
+			enumerable: propDesc.enumerable,
+			get: function() {
+				let debounced = debounce(delay, immediate, propDesc!.value);
 
-		return propertyDesc!;
+				Object.defineProperty(this, propName, {
+					configurable: true,
+					enumerable: propDesc!.enumerable,
+					writable: propDesc!.writable,
+					value: debounced
+				});
+
+				return debounced;
+			}
+		};
 	};
 };

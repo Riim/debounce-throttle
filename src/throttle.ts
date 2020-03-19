@@ -5,24 +5,20 @@ export interface IThrottled {
 }
 
 export const throttle: {
-	(delay: number, noTrailing: boolean | undefined, callback: Function): IThrottled;
-	(delay: number, callback: Function): IThrottled;
+	(delay: number, noTrailing: boolean | undefined, cb: Function): IThrottled;
+	(delay: number, cb: Function): IThrottled;
 
 	decorator(
 		delay: number,
 		noTrailing?: boolean
-	): (
-		target: Object,
-		propertyName: string,
-		propertyDesc?: PropertyDescriptor
-	) => PropertyDescriptor;
+	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
 } = function throttle(
 	delay: number,
 	noTrailing: boolean | Function | undefined,
-	callback?: Function
+	cb?: Function
 ): IThrottled {
 	if (typeof noTrailing == 'function') {
-		callback = noTrailing;
+		cb = noTrailing;
 		noTrailing = false;
 	}
 
@@ -35,10 +31,9 @@ export const throttle: {
 
 	function later() {
 		timeoutID = null;
-
 		lastExec = Date.now();
+		result = cb!.apply(context, args);
 
-		result = (callback as Function).apply(context, args);
 		if (!timeoutID) {
 			context = args = null;
 		}
@@ -51,11 +46,11 @@ export const throttle: {
 			lastExec = timestamp;
 
 			if (!timeoutID) {
-				result = (callback as Function).apply(this, arguments);
+				result = cb!.apply(this, arguments);
 				return result;
 			}
 
-			result = (callback as Function).apply(context, args);
+			result = cb!.apply(context, args);
 		}
 
 		if (noTrailing) {
@@ -76,10 +71,9 @@ export const throttle: {
 		if (timeoutID) {
 			clearTimeout(timeoutID);
 			timeoutID = null;
-
 			lastExec = Date.now();
+			result = cb!.apply(context, args);
 
-			result = (callback as Function).apply(context, args);
 			if (!timeoutID) {
 				context = args = null;
 			}
@@ -90,7 +84,6 @@ export const throttle: {
 		if (timeoutID) {
 			clearTimeout(timeoutID);
 			timeoutID = null;
-
 			context = args = null;
 		}
 	};
@@ -99,14 +92,26 @@ export const throttle: {
 } as any;
 
 throttle.decorator = (delay, noTrailing) => {
-	return (target, propertyName, propertyDesc) => {
-		if (!propertyDesc) {
-			propertyDesc = Object.getOwnPropertyDescriptor(target, propertyName);
+	return (target, propName, propDesc) => {
+		if (!propDesc) {
+			propDesc = Object.getOwnPropertyDescriptor(target, propName)!;
 		}
-		let method = propertyDesc!.value;
 
-		propertyDesc!.value = throttle(delay, noTrailing, method);
+		return {
+			configurable: true,
+			enumerable: propDesc.enumerable,
+			get: function() {
+				let throttled = throttle(delay, noTrailing, propDesc!.value);
 
-		return propertyDesc!;
+				Object.defineProperty(this, propName, {
+					configurable: true,
+					enumerable: propDesc!.enumerable,
+					writable: propDesc!.writable,
+					value: throttled
+				});
+
+				return throttled;
+			}
+		};
 	};
 };
