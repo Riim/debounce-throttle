@@ -1,18 +1,17 @@
-export interface IDebounced {
-	(): any;
+export type TDebounced<T extends Function = Function> = T & {
 	flush(): void;
 	clear(): void;
-}
+};
 
 export const debounce: {
-	(delay: number, immediate: boolean, cb: Function): IDebounced;
-	(delay: number, cb: Function): IDebounced;
+	<T extends Function>(delay: number, immediate: boolean, cb: T): TDebounced<T>;
+	<T extends Function>(delay: number, cb: T): TDebounced<T>;
 
 	decorator(
 		delay: number,
 		immediate?: boolean
 	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
-} = function debounce(delay: number, immediate: boolean | Function, cb?: Function): IDebounced {
+} = function debounce(delay: number, immediate: boolean | Function, cb?: Function): TDebounced {
 	if (typeof immediate == 'function') {
 		cb = immediate;
 		immediate = false;
@@ -38,7 +37,7 @@ export const debounce: {
 		}
 	}
 
-	let debounced = function debounced() {
+	let debounced: TDebounced = function debounced() {
 		timestamp = Date.now();
 
 		if (immediate && timestamp - lastExec >= delay) {
@@ -63,7 +62,7 @@ export const debounce: {
 		}
 
 		return result;
-	} as IDebounced;
+	} as any;
 
 	debounced.flush = () => {
 		if (timeoutID) {

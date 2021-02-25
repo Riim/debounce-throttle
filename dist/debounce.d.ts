@@ -1,10 +1,9 @@
-export interface IDebounced {
-    (): any;
+export declare type TDebounced<T extends Function = Function> = T & {
     flush(): void;
     clear(): void;
-}
+};
 export declare const debounce: {
-    (delay: number, immediate: boolean, cb: Function): IDebounced;
-    (delay: number, cb: Function): IDebounced;
+    <T extends Function>(delay: number, immediate: boolean, cb: T): TDebounced<T>;
+    <T extends Function>(delay: number, cb: T): TDebounced<T>;
     decorator(delay: number, immediate?: boolean): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
 };

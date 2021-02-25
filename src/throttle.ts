@@ -1,18 +1,17 @@
-export interface IThrottled {
-	(): any;
+export type TThrottled<T extends Function = Function> = T & {
 	flush(): void;
 	clear(): void;
-}
+};
 
 export const throttle: {
-	(delay: number, noTrailing: boolean, cb: Function): IThrottled;
-	(delay: number, cb: Function): IThrottled;
+	<T extends Function>(delay: number, noTrailing: boolean, cb: Function): TThrottled<T>;
+	<T extends Function>(delay: number, cb: Function): TThrottled<T>;
 
 	decorator(
 		delay: number,
 		noTrailing?: boolean
 	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
-} = function throttle(delay: number, noTrailing: boolean | Function, cb?: Function): IThrottled {
+} = function throttle(delay: number, noTrailing: boolean | Function, cb?: Function): TThrottled {
 	if (typeof noTrailing == 'function') {
 		cb = noTrailing;
 		noTrailing = false;
@@ -31,7 +30,7 @@ export const throttle: {
 		context = args = null;
 	}
 
-	let throttled = function throttled() {
+	let throttled: TThrottled = function throttled() {
 		let now = Date.now();
 
 		if (now - lastExec >= delay) {
@@ -58,7 +57,7 @@ export const throttle: {
 		}
 
 		return result;
-	} as IThrottled;
+	} as any;
 
 	throttled.flush = () => {
 		if (timeoutID) {
