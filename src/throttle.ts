@@ -1,67 +1,60 @@
 export interface IThrottled {
 	(): any;
-	clear(): void;
 	flush(): void;
+	clear(): void;
 }
 
 export const throttle: {
-	(delay: number, noTrailing: boolean | undefined, cb: Function): IThrottled;
+	(delay: number, noTrailing: boolean, cb: Function): IThrottled;
 	(delay: number, cb: Function): IThrottled;
 
 	decorator(
 		delay: number,
 		noTrailing?: boolean
 	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
-} = function throttle(
-	delay: number,
-	noTrailing: boolean | Function | undefined,
-	cb?: Function
-): IThrottled {
+} = function throttle(delay: number, noTrailing: boolean | Function, cb?: Function): IThrottled {
 	if (typeof noTrailing == 'function') {
 		cb = noTrailing;
 		noTrailing = false;
 	}
 
+	let lastExec = 0;
+	let timeoutID: number | null | undefined;
 	let context: any;
 	let args: IArguments | null;
-	let timestamp: number;
-	let timeoutID: number | null | undefined;
-	let lastExec = 0;
 	let result: any;
 
 	function later() {
-		timeoutID = null;
 		lastExec = Date.now();
+		timeoutID = null;
 		result = cb!.apply(context, args);
-
-		if (!timeoutID) {
-			context = args = null;
-		}
+		context = args = null;
 	}
 
 	let throttled = function throttled() {
-		timestamp = Date.now();
+		let now = Date.now();
 
-		if (timestamp - lastExec >= delay) {
-			lastExec = timestamp;
+		if (now - lastExec >= delay) {
+			lastExec = now;
 
-			if (!timeoutID) {
+			if (timeoutID) {
+				clearTimeout(timeoutID);
+
+				timeoutID = null;
+				result = cb!.apply(context, args);
+				context = args = null;
+			} else {
 				result = cb!.apply(this, arguments);
-				return result;
 			}
+		} else {
+			if (!noTrailing) {
+				context = this;
+				args = arguments;
 
-			result = cb!.apply(context, args);
-		}
-
-		if (noTrailing) {
-			return result;
-		}
-
-		context = this;
-		args = arguments;
-
-		if (!timeoutID) {
-			timeoutID = setTimeout(later, delay - (timestamp - lastExec));
+				if (!timeoutID) {
+					timeoutID = setTimeout(later, delay - (now - lastExec));
+				}
+			}
 		}
 
 		return result;
@@ -70,19 +63,18 @@ export const throttle: {
 	throttled.flush = () => {
 		if (timeoutID) {
 			clearTimeout(timeoutID);
-			timeoutID = null;
-			lastExec = Date.now();
-			result = cb!.apply(context, args);
 
-			if (!timeoutID) {
-				context = args = null;
-			}
+			lastExec = Date.now();
+			timeoutID = null;
+			result = cb!.apply(context, args);
+			context = args = null;
 		}
 	};
 
 	throttled.clear = () => {
 		if (timeoutID) {
 			clearTimeout(timeoutID);
+
 			timeoutID = null;
 			context = args = null;
 		}
@@ -100,8 +92,9 @@ throttle.decorator = (delay, noTrailing) => {
 		return {
 			configurable: true,
 			enumerable: propDesc.enumerable,
-			get: function() {
-				let throttled = throttle(delay, noTrailing, propDesc!.value);
+
+			get: function () {
+				let throttled = throttle(delay, noTrailing || false, propDesc!.value);
 
 				Object.defineProperty(this, propName, {
 					configurable: true,

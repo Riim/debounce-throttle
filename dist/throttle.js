@@ -1,53 +1,54 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.throttle = void 0;
 exports.throttle = function throttle(delay, noTrailing, cb) {
     if (typeof noTrailing == 'function') {
         cb = noTrailing;
         noTrailing = false;
     }
+    let lastExec = 0;
+    let timeoutID;
     let context;
     let args;
-    let timestamp;
-    let timeoutID;
-    let lastExec = 0;
     let result;
     function later() {
-        timeoutID = null;
         lastExec = Date.now();
+        timeoutID = null;
         result = cb.apply(context, args);
-        if (!timeoutID) {
-            context = args = null;
-        }
+        context = args = null;
     }
     let throttled = function throttled() {
-        timestamp = Date.now();
-        if (timestamp - lastExec >= delay) {
-            lastExec = timestamp;
-            if (!timeoutID) {
-                result = cb.apply(this, arguments);
-                return result;
+        let now = Date.now();
+        if (now - lastExec >= delay) {
+            lastExec = now;
+            if (timeoutID) {
+                clearTimeout(timeoutID);
+                timeoutID = null;
+                result = cb.apply(context, args);
+                context = args = null;
             }
-            result = cb.apply(context, args);
+            else {
+                result = cb.apply(this, arguments);
+            }
         }
-        if (noTrailing) {
-            return result;
-        }
-        context = this;
-        args = arguments;
-        if (!timeoutID) {
-            timeoutID = setTimeout(later, delay - (timestamp - lastExec));
+        else {
+            if (!noTrailing) {
+                context = this;
+                args = arguments;
+                if (!timeoutID) {
+                    timeoutID = setTimeout(later, delay - (now - lastExec));
+                }
+            }
         }
         return result;
     };
     throttled.flush = () => {
         if (timeoutID) {
             clearTimeout(timeoutID);
-            timeoutID = null;
             lastExec = Date.now();
+            timeoutID = null;
             result = cb.apply(context, args);
-            if (!timeoutID) {
-                context = args = null;
-            }
+            context = args = null;
         }
     };
     throttled.clear = () => {
@@ -68,7 +69,7 @@ exports.throttle.decorator = (delay, noTrailing) => {
             configurable: true,
             enumerable: propDesc.enumerable,
             get: function () {
-                let throttled = exports.throttle(delay, noTrailing, propDesc.value);
+                let throttled = exports.throttle(delay, noTrailing || false, propDesc.value);
                 Object.defineProperty(this, propName, {
                     configurable: true,
                     enumerable: propDesc.enumerable,

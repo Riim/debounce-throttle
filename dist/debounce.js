@@ -1,15 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.debounce = void 0;
 exports.debounce = function debounce(delay, immediate, cb) {
     if (typeof immediate == 'function') {
         cb = immediate;
         immediate = false;
     }
+    let timestamp;
+    let lastExec = 0;
+    let timeoutID;
     let context;
     let args;
-    let timestamp;
-    let timeoutID;
-    let lastExec = 0;
     let result;
     function later() {
         let now = Date.now();
@@ -17,40 +18,42 @@ exports.debounce = function debounce(delay, immediate, cb) {
             timeoutID = setTimeout(later, delay - (now - timestamp));
         }
         else {
-            timeoutID = null;
             lastExec = now;
+            timeoutID = null;
             result = cb.apply(context, args);
-            if (!timeoutID) {
-                context = args = null;
-            }
+            context = args = null;
         }
     }
     let debounced = function debounced() {
         timestamp = Date.now();
         if (immediate && timestamp - lastExec >= delay) {
             lastExec = timestamp;
-            if (!timeoutID) {
-                result = cb.apply(this, arguments);
-                return result;
+            if (timeoutID) {
+                clearTimeout(timeoutID);
+                timeoutID = null;
+                result = cb.apply(context, args);
+                context = args = null;
             }
-            result = cb.apply(context, args);
+            else {
+                result = cb.apply(this, arguments);
+            }
         }
-        context = this;
-        args = arguments;
-        if (!timeoutID) {
-            timeoutID = setTimeout(later, delay);
+        else {
+            context = this;
+            args = arguments;
+            if (!timeoutID) {
+                timeoutID = setTimeout(later, delay);
+            }
         }
         return result;
     };
     debounced.flush = () => {
         if (timeoutID) {
             clearTimeout(timeoutID);
-            timeoutID = null;
             lastExec = Date.now();
+            timeoutID = null;
             result = cb.apply(context, args);
-            if (!timeoutID) {
-                context = args = null;
-            }
+            context = args = null;
         }
     };
     debounced.clear = () => {
@@ -71,7 +74,7 @@ exports.debounce.decorator = (delay, immediate) => {
             configurable: true,
             enumerable: propDesc.enumerable,
             get: function () {
-                let debounced = exports.debounce(delay, immediate, propDesc.value);
+                let debounced = exports.debounce(delay, immediate || false, propDesc.value);
                 Object.defineProperty(this, propName, {
                     configurable: true,
                     enumerable: propDesc.enumerable,
