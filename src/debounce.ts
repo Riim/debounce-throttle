@@ -1,4 +1,4 @@
-export type TDebounced<T extends Function = Function> = T & {
+export type TDebounced<T extends Function> = T & {
 	flush(): void;
 	clear(): void;
 };
@@ -11,7 +11,7 @@ export const debounce: {
 		delay: number,
 		immediate?: boolean
 	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
-} = function debounce(delay: number, immediate: boolean | Function, cb?: Function): TDebounced {
+} = function debounce(delay: number, immediate: boolean | Function, cb?: Function): TDebounced<Function> {
 	if (typeof immediate == 'function') {
 		cb = immediate;
 		immediate = false;
@@ -37,7 +37,7 @@ export const debounce: {
 		}
 	}
 
-	let debounced: TDebounced = function debounced() {
+	let debounced: TDebounced<Function> = function debounced() {
 		timestamp = Date.now();
 
 		if (immediate && timestamp - lastExec >= delay) {

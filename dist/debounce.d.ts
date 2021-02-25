@@ -1,4 +1,4 @@
-export declare type TDebounced<T extends Function = Function> = T & {
+export declare type TDebounced<T extends Function> = T & {
     flush(): void;
     clear(): void;
 };

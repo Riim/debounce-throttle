@@ -1,17 +1,17 @@
-export type TThrottled<T extends Function = Function> = T & {
+export type TThrottled<T extends Function> = T & {
 	flush(): void;
 	clear(): void;
 };
 
 export const throttle: {
-	<T extends Function>(delay: number, noTrailing: boolean, cb: Function): TThrottled<T>;
-	<T extends Function>(delay: number, cb: Function): TThrottled<T>;
+	<T extends Function>(delay: number, noTrailing: boolean, cb: T): TThrottled<T>;
+	<T extends Function>(delay: number, cb: T): TThrottled<T>;
 
 	decorator(
 		delay: number,
 		noTrailing?: boolean
 	): (target: Object, propName: string, propDesc?: PropertyDescriptor) => PropertyDescriptor;
-} = function throttle(delay: number, noTrailing: boolean | Function, cb?: Function): TThrottled {
+} = function throttle(delay: number, noTrailing: boolean | Function, cb?: Function): TThrottled<Function> {
 	if (typeof noTrailing == 'function') {
 		cb = noTrailing;
 		noTrailing = false;
@@ -30,7 +30,7 @@ export const throttle: {
 		context = args = null;
 	}
 
-	let throttled: TThrottled = function throttled() {
+	let throttled: TThrottled<Function> = function throttled() {
 		let now = Date.now();
 
 		if (now - lastExec >= delay) {
